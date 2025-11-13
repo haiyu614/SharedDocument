@@ -1,0 +1,42 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">欢迎, {{ user.username }}!</h1>
+    <p class="lead">这是共享文档系统的首页。您可以从这里开始浏览和管理您的文档。</p>
+    <hr class="my-4">
+    <p>系统目前处于开发阶段，更多功能即将推出。</p>
+    <a class="btn btn-primary btn-lg" href="#" role="button">了解更多</a>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">我的文档</h5>
+                <p class="card-text">查看和管理您上传的所有文档。</p>
+                <a href="#" class="btn btn-primary">查看文档</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">共享文档</h5>
+                <p class="card-text">浏览其他用户共享的文档。</p>
+                <a href="#" class="btn btn-primary">浏览共享</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">上传文档</h5>
+                <p class="card-text">上传新的文档到系统。</p>
+                <a href="#" class="btn btn-primary">上传文档</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
