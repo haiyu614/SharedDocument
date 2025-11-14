@@ -1,0 +1,42 @@
+# Alembic 配置文件示例
+# 复制为 alembic.ini 并修改数据库连接
+
+[alembic]
+script_location = alembic
+prepend_sys_path = .
+sqlalchemy.url = mysql+mysqlconnector://user:password@localhost:3306/collab_doc
+
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARN
+handlers = console
+qualname =
+
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+

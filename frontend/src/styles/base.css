@@ -1,0 +1,30 @@
+:root {
+  --color-background: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-primary: #2f54eb;
+  --color-border: #d6d9e0;
+  --font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background: var(--color-background);
+  color: #1f2633;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a.router-link-active {
+  font-weight: 600;
+}
+
