@@ -16,9 +16,6 @@
 
 - Flask - Web框架
 - SQLAlchemy - 数据库ORM
-- Flask-Bcrypt - 密码哈希
-- Flask-JWT-Extended - JWT认证
-- Bootstrap - 前端UI框架
 
 ## 安装与运行
 
@@ -33,6 +30,11 @@
    ```
 
 3. 在浏览器中访问 `http://127.0.0.1:5000`
+
+
+4. 数据库：
+- 已连接远程数据库，无需本地安装
+- 可访问`http://8.138.190.109/phpmyadmin/index.php?route=/database/structure&db=shared_documents` 图形化界面
 
 ## API接口
 

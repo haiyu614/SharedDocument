@@ -10,7 +10,7 @@ class Config:
 
     # 数据库配置
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'mysql+pymysql://root:@127.0.0.1:3306/shared_documents'    
+        'mysql+pymysql://root:123456@8.138.190.109:3306/shared_documents'    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 会话配置
