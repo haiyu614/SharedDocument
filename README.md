@@ -14,11 +14,9 @@
 
 ## 技术栈
 
-- Flask - Web框架
+- Flask - 后端Web框架
 - SQLAlchemy - 数据库ORM
-- Flask-Bcrypt - 密码哈希
-- Flask-JWT-Extended - JWT认证
-- Bootstrap - 前端UI框架
+
 
 ## 安装与运行
 
@@ -38,16 +36,16 @@
 
 ### 认证相关
 
-- `POST /api/login` - 用户登录
+- `POST /auth/login` - 用户登录
   ```json
   {
     "username": "用户名",
     "password": "密码",
-    "remember_me"："记住我"
+    "remember_me": "记住我"
   }
   ```
 
-- `POST /api/register` - 用户注册
+- `POST /auth/register` - 用户注册
   ```json
   {
     "username": "用户名",
@@ -57,13 +55,10 @@
   }
   ```
 
-- `POST /api/refresh` - 刷新访问令牌
+- `POST /auth/refresh` - 刷新访问令牌
   - 需要在请求头中提供有效的刷新令牌
 
-- `DELETE /api/logout` - 用户登出
-  - 需要在请求头中提供有效的访问令牌
-
-- `GET /api/profile` - 获取用户资料
+- `DELETE /auth/logout` - 用户登出
   - 需要在请求头中提供有效的访问令牌
 
 ## 项目结构
