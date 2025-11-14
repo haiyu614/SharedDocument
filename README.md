@@ -44,7 +44,8 @@
   ```json
   {
     "username": "用户名",
-    "password": "密码"
+    "password": "密码",
+    "remember_me": "记住我"
   }
   ```
 
@@ -53,7 +54,9 @@
   {
     "username": "用户名",
     "email": "邮箱",
-    "password": "密码"
+    "password1": "输入密码",
+    "password2": "再次输入密码",
+    "is_active": "用户状态"
   }
   ```
 
@@ -63,8 +66,7 @@
 - `DELETE /api/logout` - 用户登出
   - 需要在请求头中提供有效的访问令牌
 
-- `GET /api/profile` - 获取用户资料
-  - 需要在请求头中提供有效的访问令牌
+
 
 ## 项目结构
 
