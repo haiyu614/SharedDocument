@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, List, Optional
 
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
@@ -78,7 +78,7 @@ class AuthService:
             payload = jwt.decode(token, self._settings.secret_key, algorithms=[self._settings.algorithm])
         except JWTError as exc:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 无效") from exc
-        user_id: str | None = payload.get("sub")
+        user_id: Optional[str] = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 缺少 sub")
         user = self._db.get(user_model.User, int(user_id))
@@ -89,7 +89,7 @@ class AuthService:
     async def get_current_user(self, token: str) -> user_model.User:
         return await self.decode_token(token)
 
-    async def list_users(self) -> list[auth_schema.UserRead]:
+    async def list_users(self) -> List[auth_schema.UserRead]:
         users = self._db.query(user_model.User).all()
         return [auth_schema.UserRead.model_validate(item, from_attributes=True) for item in users]
 

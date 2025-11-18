@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import List
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 
@@ -37,9 +39,9 @@ async def read_profile(
     return auth_schema.UserRead.model_validate(user, from_attributes=True)
 
 
-@router.get("/users", response_model=list[auth_schema.UserRead])
+@router.get("/users", response_model=List[auth_schema.UserRead])
 async def list_users(
     service: AuthService = Depends(get_auth_service),
-) -> list[auth_schema.UserRead]:
+) -> List[auth_schema.UserRead]:
     return await service.list_users()
 
