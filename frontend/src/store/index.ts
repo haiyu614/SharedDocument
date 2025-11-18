@@ -37,6 +37,17 @@ export const useAuthStore = defineStore("auth", {
       this.user = profile;
       localStorage.setItem("user", JSON.stringify(profile));
     },
+    async register(username: string, password: string, email?: string) {
+      const payload: { username: string; password: string; email?: string } = {
+        username,
+        password
+      };
+      if (email) {
+        payload.email = email;
+      }
+      const user = await AuthService.register(payload);
+      return user;
+    },
     async hydrateFromStorage() {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
