@@ -17,7 +17,7 @@ class RegistrationForm(FlaskForm):
     username = StringField('用户名', validators=[DataRequired(), Length(min=4, max=20)])
     email = StringField('电子邮箱', validators=[DataRequired(), Email()])
     password = PasswordField('密码', validators=[DataRequired(), Length(min=6)])
-    password2 = PasswordField('确认密码', validators=[DataRequired(), EqualTo('password')])
+    confirm_password = PasswordField('确认密码', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('注册')
     class Meta:
         csrf = False  

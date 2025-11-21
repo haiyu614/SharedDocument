@@ -1,0 +1,63 @@
+<div class="doc-card glass-panel"
+    onclick="window.location.href='{{ url_for('documents.download_file', doc_id=doc.id) }}'">
+    {% if doc.file_type in ['pdf'] %}
+    <i class="fas fa-file-pdf doc-icon" style="color: #ef4444;"></i>
+    {% elif doc.file_type in ['doc', 'docx'] %}
+    <i class="fas fa-file-word doc-icon" style="color: #3b82f6;"></i>
+    {% elif doc.file_type in ['xls', 'xlsx'] %}
+    <i class="fas fa-file-excel doc-icon" style="color: #10b981;"></i>
+    {% elif doc.file_type in ['ppt', 'pptx'] %}
+    <i class="fas fa-file-powerpoint doc-icon" style="color: #f97316;"></i>
+    {% elif doc.file_type in ['jpg', 'jpeg', 'png', 'gif'] %}
+    <i class="fas fa-image doc-icon" style="color: #a855f7;"></i>
+    {% else %}
+    <i class="fas fa-file doc-icon" style="color: #94a3b8;"></i>
+    {% endif %}
+
+    <div class="doc-title" title="{{ doc.original_name }}">{{ doc.original_name }}</div>
+    <div class="doc-meta">
+        {{ (doc.size / 1024)|round(1) }} KB • {{ doc.upload_date.strftime('%Y-%m-%d') }}
+        {% if doc.user_id != current_user.id %}
+        <br><span style="color: var(--primary);"><i class="fas fa-share"></i> 来自 {{ doc.user.username }}</span>
+        {% endif %}
+    </div>
+
+    <!-- Actions Overlay -->
+    <div style="position: absolute; top: 5px; right: 5px; display: flex; gap: 5px;">
+        {% set editable_extensions = ['txt', 'md', 'py', 'html', 'css', 'js', 'json', 'xml', 'yml', 'yaml', 'xls', 'xlsx', 'csv', 'doc', 'docx'] %}
+        
+        {% if doc.file_type in editable_extensions %}
+            {% if doc.user_id == current_user.id %}
+                <a href="{{ url_for('documents.editor', doc_id=doc.id) }}" class="btn-ghost"
+                    style="padding: 5px; border: none; color: var(--primary); text-decoration: none;"
+                    onclick="event.stopPropagation();" title="编辑">
+                    <i class="fas fa-edit"></i>
+                </a>
+            {% else %}
+                {# Check if current user has edit permission #}
+                {# This logic is a bit tricky in template loop without pre-fetching permission #}
+                {# We can assume if it's in shared_documents list and we are here, check logic #}
+                <a href="{{ url_for('documents.editor', doc_id=doc.id) }}" class="btn-ghost"
+                    style="padding: 5px; border: none; color: var(--primary); text-decoration: none;"
+                    onclick="event.stopPropagation();" title="查看/编辑">
+                    <i class="fas fa-eye"></i>
+                </a>
+            {% endif %}
+        {% endif %}
+
+        {% if doc.user_id == current_user.id %}
+        <button class="btn-ghost" style="padding: 5px; border: none; color: var(--accent);"
+            onclick="event.stopPropagation(); openShareModal({{ doc.id }})" title="分享">
+            <i class="fas fa-share-alt"></i>
+        </button>
+        
+        <form action="{{ url_for('documents.delete_file', doc_id=doc.id) }}" method="post"
+            style="display: inline;" onclick="event.stopPropagation();">
+            <button type="submit" class="btn-ghost" style="padding: 5px; border: none; color: #ef4444;"
+                onclick="return confirm('确定要删除吗？')" title="删除">
+                <i class="fas fa-times"></i>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>

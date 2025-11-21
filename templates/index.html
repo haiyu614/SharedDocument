@@ -1,42 +1,214 @@
-
 {% extends "base.html" %}
 
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4">欢迎, {{ user.username }}!</h1>
-    <p class="lead">这是共享文档系统的首页。您可以从这里开始浏览和管理您的文档。</p>
-    <hr class="my-4">
-    <p>系统目前处于开发阶段，更多功能即将推出。</p>
-    <a class="btn btn-primary btn-lg" href="#" role="button">了解更多</a>
+<div class="dashboard-grid">
+    <!-- Sidebar -->
+    <aside class="sidebar glass-panel">
+        <div style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass); margin-bottom: 1rem;">
+            <button class="btn btn-primary" style="width: 100%" onclick="openUploadModal()">
+                <i class="fas fa-plus"></i> 上传文档
+            </button>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="#my-docs" class="sidebar-link active" onclick="showSection('my-docs')">
+                    <i class="fas fa-home"></i> 我的文档
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#shared-docs" class="sidebar-link" onclick="showSection('shared-docs')">
+                    <i class="fas fa-share-alt"></i> 与我共享
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-clock"></i> 最近访问
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-star"></i> 收藏夹
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="#" class="sidebar-link">
+                    <i class="fas fa-trash"></i> 回收站
+                </a>
+            </li>
+        </ul>
+
+        <div style="margin-top: auto; padding-top: 2rem;">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">存储空间</div>
+            <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                <div style="width: 45%; height: 100%; background: var(--gradient-primary);"></div>
+            </div>
+            <div
+                style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; justify-content: space-between;">
+                <span>4.5 GB</span>
+                <span>10 GB</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card glass-panel">
+                <span class="stat-label">我的文档</span>
+                <span class="stat-value">{{ my_documents|length }}</span>
+            </div>
+            <div class="stat-card glass-panel">
+                <span class="stat-label">共享给我的</span>
+                <span class="stat-value">{{ shared_documents|length }}</span>
+            </div>
+        </div>
+
+        <!-- My Documents Section -->
+        <div id="my-docs-section">
+            <h3 style="margin-bottom: 1.5rem; font-weight: 600;">我的文件</h3>
+            
+            {% if my_documents %}
+            <div class="doc-grid">
+                {% for doc in my_documents %}
+                    {% include 'doc_card.html' %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-panel" style="text-align: center; padding: 3rem;">
+                <i class="fas fa-cloud-upload-alt"
+                    style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted);">暂无文件，点击左上角上传</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Shared Documents Section -->
+        <div id="shared-docs-section" style="display: none;">
+            <h3 style="margin-bottom: 1.5rem; font-weight: 600;">共享给我的文件</h3>
+            
+            {% if shared_documents %}
+            <div class="doc-grid">
+                {% for doc in shared_documents %}
+                    {% include 'doc_card.html' %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="glass-panel" style="text-align: center; padding: 3rem;">
+                <i class="fas fa-share-alt"
+                    style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted);">暂无共享文件</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">我的文档</h5>
-                <p class="card-text">查看和管理您上传的所有文档。</p>
-                <a href="#" class="btn btn-primary">查看文档</a>
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-panel" style="padding: 2rem; width: 100%; max-width: 500px; position: relative;">
+        <h3 style="margin-bottom: 1.5rem;">上传文件</h3>
+        <form action="{{ url_for('documents.upload_file') }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <div style="border: 2px dashed var(--border-glass); padding: 2rem; text-align: center; border-radius: var(--radius-sm); cursor: pointer;"
+                    onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt"
+                        style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary);"></i>
+                    <p>点击选择文件或拖拽至此</p>
+                    <input type="file" name="file" id="fileInput" style="display: none"
+                        onchange="document.getElementById('fileName').textContent = this.files[0].name">
+                </div>
+                <p id="fileName" style="margin-top: 0.5rem; color: var(--text-main); font-size: 0.9rem;"></p>
             </div>
-        </div>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeUploadModal()">取消</button>
+                <button type="submit" class="btn btn-primary">开始上传</button>
+            </div>
+        </form>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">共享文档</h5>
-                <p class="card-text">浏览其他用户共享的文档。</p>
-                <a href="#" class="btn btn-primary">浏览共享</a>
-            </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-panel" style="padding: 2rem; width: 100%; max-width: 500px; position: relative;">
+        <h3 style="margin-bottom: 1.5rem;">分享文件</h3>
+        <p style="margin-bottom: 1rem; color: var(--text-muted);">输入用户名以分享文件</p>
+        
+        <div class="form-group">
+            <label class="form-label">用户名</label>
+            <input type="text" id="shareUsername" class="glass-input" placeholder="输入对方用户名">
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">上传文档</h5>
-                <p class="card-text">上传新的文档到系统。</p>
-                <a href="#" class="btn btn-primary">上传文档</a>
-            </div>
+        
+        <div class="form-group">
+            <label class="form-label">权限</label>
+            <select id="sharePermission" class="glass-input">
+                <option value="view">仅查看</option>
+                <option value="edit">可编辑</option>
+            </select>
+        </div>
+        
+        <input type="hidden" id="shareDocId">
+        
+        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+            <button type="button" class="btn btn-ghost" onclick="closeShareModal()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="submitShare()">分享</button>
         </div>
     </div>
 </div>
+
+<script>
+    function showSection(sectionName) {
+        document.getElementById('my-docs-section').style.display = sectionName === 'my-docs' ? 'block' : 'none';
+        document.getElementById('shared-docs-section').style.display = sectionName === 'shared-docs' ? 'block' : 'none';
+        
+        // Update active state in sidebar
+        document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    function openShareModal(docId) {
+        document.getElementById('shareModal').style.display = 'flex';
+        document.getElementById('shareDocId').value = docId;
+    }
+    
+    function closeShareModal() {
+        document.getElementById('shareModal').style.display = 'none';
+        document.getElementById('shareUsername').value = '';
+    }
+    
+    function submitShare() {
+        const docId = document.getElementById('shareDocId').value;
+        const username = document.getElementById('shareUsername').value;
+        const permission = document.getElementById('sharePermission').value;
+        
+        if (!username) {
+            alert('请输入用户名');
+            return;
+        }
+        
+        fetch(`/documents/share/${docId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() if csrf_token else "" }}'
+            },
+            body: JSON.stringify({ username, permission })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('分享成功');
+                closeShareModal();
+            } else {
+                alert('分享失败: ' + data.error);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('系统错误');
+        });
+    }
+</script>
 {% endblock %}

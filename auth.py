@@ -1,4 +1,5 @@
 
+from datetime import datetime, timedelta, timezone
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_jwt_extended import (
     create_access_token, create_refresh_token, jwt_required, 
@@ -6,7 +7,7 @@ from flask_jwt_extended import (
     set_refresh_cookies, unset_jwt_cookies
 )
 from werkzeug.urls import url_parse
-from app import db
+from extensions import db
 from models import User
 from forms import LoginForm, RegistrationForm
 auth = Blueprint('auth', __name__)
@@ -15,13 +16,17 @@ auth = Blueprint('auth', __name__)
 blacklisted_tokens = set()
 
 # 在JWT令牌创建时添加jti（JWT ID）到令牌中
-@auth.after_request
-def after_request(response):
-    # 在响应中设置CORS头
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+# @auth.after_request
+# def after_request(response):
+#     # 在响应中设置CORS头
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+#     # 防止浏览器缓存受保护页面，确保上传/删除后数据立即刷新
+#     response.headers['Cache-Control'] = 'no-store, max-age=0, must-revalidate'
+#     response.headers['Pragma'] = 'no-cache'
+#     response.headers['Expires'] = '0'
+#     return response
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -129,12 +134,34 @@ def logout():
 @jwt_required(refresh=True)
 def refresh():
     current_user_id = get_jwt_identity()
+    # Ensure identity is a string for create_access_token if needed, although int works usually.
+    # But consistency is good.
     new_token = create_access_token(identity=current_user_id)
     response = jsonify({'access_token': new_token})
     set_access_cookies(response, new_token)
     return response
 
-# 令牌注销端点
+@auth.after_request
+def after_request(response):
+    # 在响应中设置CORS头
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    # 防止浏览器缓存受保护页面，确保上传/删除后数据立即刷新
+    response.headers['Cache-Control'] = 'no-store, max-age=0, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    try:
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.timestamp(datetime.now(timezone.utc))
+        target_timestamp = datetime.timestamp(datetime.now(timezone.utc) + timedelta(minutes=30))
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+    except (RuntimeError, KeyError):
+        # Case where there is no valid JWT. Just return the original response
+        return response
+    return response
 @auth.route('/logout2', methods=['DELETE'])
 @jwt_required()
 def logout2():
@@ -149,4 +176,26 @@ def logout2():
 def index():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
-    return render_template('index.html', title='共享文档系统', user=user)
+    
+    # Fetch user documents
+    from models import Document, DocumentShare
+    import os
+    from flask import current_app
+    
+    # Own documents - simple DB fetch, trust the DB
+    my_documents = Document.query.filter_by(user_id=current_user_id).order_by(Document.upload_date.desc()).all()
+    
+    # Shared with me
+    shared_shares = DocumentShare.query.filter_by(user_id=current_user_id).all()
+    shared_documents = []
+    for share in shared_shares:
+        if share.document:
+            shared_documents.append(share.document)
+        else:
+            # Clean up orphan share if document is gone (this is safe as it's DB integrity)
+            db.session.delete(share)
+            
+    if len(shared_documents) < len(shared_shares):
+         db.session.commit()
+
+    return render_template('index.html', title='共享文档系统', user=user, my_documents=my_documents, shared_documents=shared_documents)

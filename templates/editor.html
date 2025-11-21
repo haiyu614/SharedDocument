@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; padding-top: 2rem;">
+    <div class="glass-panel"
+        style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="{{ url_for('auth.index') }}" class="btn btn-ghost" style="padding: 0.5rem 1rem;">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
+            <h2 style="margin: 0; font-size: 1.2rem;">
+                <i class="fas fa-edit" style="color: var(--primary); margin-right: 0.5rem;"></i>
+                {{ doc.original_name }}
+            </h2>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <span id="status-msg" style="font-size: 0.9rem; color: var(--text-muted); transition: opacity 0.3s;"></span>
+            <button onclick="saveContent()" class="btn btn-primary">
+                <i class="fas fa-save"></i> 保存
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="padding: 0; overflow: hidden; height: calc(100vh - 200px);">
+        <textarea id="editor-area" style="
+            width: 100%; 
+            height: 100%; 
+            background: rgba(15, 23, 42, 0.8); 
+            color: #f8fafc; 
+            border: none; 
+            padding: 1.5rem; 
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+            font-size: 14px; 
+            line-height: 1.6; 
+            resize: none; 
+            outline: none;
+        " spellcheck="false"></textarea>
+    </div>
+</div>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+    const docId = {{ doc.id }};
+    const statusMsg = document.getElementById('status-msg');
+    const editor = document.getElementById('editor-area');
+    
+    // Socket.IO setup
+    const socket = io();
+    let isRemoteUpdate = false;
+    
+    socket.on('connect', function() {
+        socket.emit('join', {room: 'doc_' + docId});
+    });
+    
+    socket.on('update_content', function(data) {
+        if (data.type === 'text') {
+            if (editor.value !== data.content) {
+                const cursorPos = editor.selectionStart;
+                isRemoteUpdate = true;
+                editor.value = data.content;
+                // Try to maintain cursor position if possible, though simplistic
+                editor.selectionStart = editor.selectionEnd = cursorPos;
+                isRemoteUpdate = false;
+            }
+        }
+    });
+
+    editor.addEventListener('input', function() {
+        if (!isRemoteUpdate) {
+            socket.emit('update_content', {
+                room: 'doc_' + docId,
+                type: 'text',
+                content: editor.value
+            });
+        }
+    });
+
+    // Load content
+    fetch(`/documents/content/${docId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.content !== undefined) {
+                editor.value = data.content;
+            } else {
+                alert('Error loading content: ' + data.error);
+            }
+        })
+        .catch(err => console.error(err));
+
+    // Save content
+    function saveContent() {
+        statusMsg.textContent = 'Saving...';
+        statusMsg.style.opacity = '1';
+
+        fetch(`/documents/content/${docId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() if csrf_token else "" }}' // Handle if CSRF is enabled later
+            },
+            body: JSON.stringify({ content: editor.value })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    statusMsg.textContent = '已保存';
+                    statusMsg.style.color = '#10b981';
+                    setTimeout(() => {
+                        statusMsg.style.opacity = '0';
+                        statusMsg.style.color = 'var(--text-muted)';
+                    }, 2000);
+                } else {
+                    statusMsg.textContent = '保存失败';
+                    statusMsg.style.color = '#ef4444';
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => {
+                statusMsg.textContent = 'Error';
+                console.error(err);
+            });
+    }
+
+    // Enable Tab indentation
+    editor.addEventListener('keydown', function (e) {
+        if (e.key == 'Tab') {
+            e.preventDefault();
+            var start = this.selectionStart;
+            var end = this.selectionEnd;
+
+            // set textarea value to: text before caret + tab + text after caret
+            this.value = this.value.substring(0, start) +
+                "\t" + this.value.substring(end);
+
+            // put caret at right place again
+            this.selectionStart = this.selectionEnd = start + 1;
+        }
+    });
+</script>
+{% endblock %}
