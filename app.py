@@ -6,6 +6,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from extensions import db, bcrypt, jwt, socketio
 from config import Config
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -17,14 +18,17 @@ def create_app(config_class=Config):
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
+        print('[JWT] expired_token_loader triggered')
         return redirect(url_for('auth.login'))
 
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
+        print(f'[JWT] invalid_token_loader triggered: {error}')
         return redirect(url_for('auth.login'))
 
     @jwt.unauthorized_loader
     def missing_token_callback(error):
+        print(f'[JWT] unauthorized_loader triggered: {error}')
         return redirect(url_for('auth.login'))
 
     # 注册蓝图
@@ -49,7 +53,7 @@ def create_app(config_class=Config):
         with app.app_context():
             db.create_all()
         return "Database tables updated successfully!"
-        
+
     @socketio.on('join')
     def on_join(data):
         room = data['room']
@@ -72,7 +76,7 @@ def create_app(config_class=Config):
     def inject_user():
         from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
         from models import User
-        
+
         class Anonymous:
             is_authenticated = False
             username = "Guest"
@@ -80,16 +84,22 @@ def create_app(config_class=Config):
         try:
             verify_jwt_in_request(optional=True)
             user_id = get_jwt_identity()
-            if user_id:
-                user = User.query.get(user_id)
-                if user:
-                    return {'current_user': user}
+            if user_id is not None:
+                try:
+                    uid_int = int(user_id)
+                except (TypeError, ValueError):
+                    uid_int = None
+                if uid_int is not None:
+                    user = User.query.get(uid_int)
+                    if user:
+                        return {'current_user': user}
         except Exception:
             pass
-            
+
         return {'current_user': Anonymous()}
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
