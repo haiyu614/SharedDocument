@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - 共享文档{% else %}共享文档系统{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} glass-panel">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Navigation -->
+    {% if current_user.is_authenticated %}
+    <nav class="navbar glass-panel container">
+        <a href="{{ url_for('auth.index') }}" class="nav-brand">
+            <i class="fas fa-cloud-upload-alt"></i> SharedDocs
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('auth.index') }}" class="nav-link active">首页</a>
+            <span class="nav-link">欢迎, {{ current_user.username }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">退出</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

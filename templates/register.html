@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card glass-panel">
+        <h2 class="auth-title">创建账户</h2>
+        <p class="auth-subtitle">加入我们的共享文档社区</p>
+
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="glass-input", placeholder="设置用户名") }}
+                {% for error in form.username.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="glass-input", placeholder="输入电子邮箱") }}
+                {% for error in form.email.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="glass-input", placeholder="设置密码") }}
+                {% for error in form.password.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.confirm_password.label(class="form-label") }}
+                {{ form.confirm_password(class="glass-input", placeholder="确认密码") }}
+                {% for error in form.confirm_password.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%">注册</button>
+
+            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+                已有账号? <a href="{{ url_for('auth.login') }}"
+                    style="color: var(--primary); text-decoration: none;">直接登录</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
