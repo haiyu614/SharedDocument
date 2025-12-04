@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card glass-panel">
+        <h2 class="auth-title">欢迎回来</h2>
+        <p class="auth-subtitle">登录您的账户以继续</p>
+
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="glass-input", placeholder="输入用户名") }}
+                {% for error in form.username.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="glass-input", placeholder="输入密码") }}
+                {% for error in form.password.errors %}
+                <span style="color: #ef4444; font-size: 0.8rem;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                {{ form.remember_me() }} {{ form.remember_me.label(style="color: var(--text-muted); cursor: pointer;")
+                }}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%">登录</button>
+
+            <div style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+                还没有账号? <a href="{{ url_for('auth.register') }}"
+                    style="color: var(--primary); text-decoration: none;">立即注册</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ doc.original_name }} - 编辑器</title>
+    
+    <!-- Base Styles from main app (optional, for buttons/font) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- jQuery (Must be first for Luckysheet) -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Luckysheet CSS -->
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/css/pluginsCss.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/plugins.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/css/luckysheet.css' />
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/luckysheet/dist/assets/iconfont/iconfont.css' />
+
+    <!-- Luckyexcel for importing xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/luckyexcel/dist/luckyexcel.umd.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    
+    <!-- Luckysheet Plugin (Required for many features) -->
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet/dist/plugins/js/plugin.js"></script>
+    <!-- Luckysheet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/luckysheet/dist/luckysheet.umd.js"></script>
+    <!-- ExcelJS for exporting -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* Minimal styles for the custom header */
+        .editor-header {
+            height: 50px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 1000; /* Above Luckysheet */
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #666;
+        }
+        .btn-ghost:hover {
+            background: #f1f1f1;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        /* Luckysheet Container */
+        #luckysheet {
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            width: 100%;
+            left: 0px;
+            top: 50px; /* Height of header */
+            bottom: 0px;
+            outline: none;
+        }
+
+        .luckysheet-share-logo { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Header -->
+    <div class="editor-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="{{ url_for('auth.index') }}" class="btn btn-ghost">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
+            <div style="font-weight: 600; color: #333; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-file-excel" style="color: #10b981;"></i>
+                {{ doc.original_name }}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span id="status-msg" style="font-size: 0.9rem; color: #666; transition: opacity 0.3s; opacity: 0;"></span>
+            <button onclick="saveContent()" class="btn btn-primary">
+                <i class="fas fa-save"></i> 保存
+            </button>
+        </div>
+    </div>
+
+    <!-- Luckysheet Container -->
+    <div id="luckysheet"></div>
+
+    <script>
+        const docId = {{ doc.id }};
+        const docName = "{{ doc.original_name }}";
+        const fileType = "{{ doc.file_type }}";
+        const statusMsg = document.getElementById('status-msg');
+
+        $(function () {
+            // Load file logic
+            fetch(`/documents/download/${docId}`)
+            .then(response => response.blob())
+            .then(blob => {
+                const file = new File([blob], docName, { type: blob.type });
+                
+                if (fileType === 'xlsx' || fileType === 'xls') {
+                    LuckyExcel.transformExcelToLucky(file, function(exportJson, luckysheetfile){
+                        if(exportJson.sheets==null || exportJson.sheets.length==0){
+                            alert("Failed to read content, specific xls features might not be supported.");
+                            return;
+                        }
+                        initLuckysheet(exportJson.sheets);
+                    });
+                } else {
+                    alert("Format not fully supported in this view.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to load file');
+            });
+        });
+
+        function initLuckysheet(sheets) {
+            luckysheet.create({
+                container: 'luckysheet', 
+                lang: 'zh', 
+                showinfobar: false, 
+                data: sheets,
+                title: docName,
+                userInfo: 'User',
+                allowUpdate: true,
+                loadUrl: "",
+                // Correctly handle resizing
+                hook: {
+                    workbookCreateAfter: function() {
+                        // Resize logic if needed, but absolute positioning should handle it
+                    },
+                    updated: function(operate) {
+                        // Broadcast update
+                        socket.emit('update_content', {
+                            room: 'doc_' + docId,
+                            type: 'luckysheet',
+                            operate: operate
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Socket.IO setup
+        const socket = io();
+        
+        socket.on('connect', function() {
+            socket.emit('join', {room: 'doc_' + docId});
+        });
+        
+        socket.on('update_content', function(data) {
+            if (data.type === 'luckysheet' && data.operate) {
+                // Apply update to Luckysheet
+                // This is a simplified sync. A full OT/CRDT sync for Luckysheet is complex.
+                // Here we just try to apply the operation or reload data if simple op not supported.
+                // Luckysheet doesn't have a simple "applyOp" API public yet for all ops.
+                // Ideally we would just reload the sheet data for simple sync, 
+                // or users might overwrite each other. 
+                // For demo purposes, we will refresh the specific range or cell if possible.
+                
+                // Warning: Real-time collaboration needs a backend OT server.
+                // This is a basic broadcast.
+                
+                // Let's try to re-render if it's a simple value change? 
+                // Actually Luckysheet exposes `luckysheet.refresh()` but that doesn't apply external ops.
+                
+                // For MVP: Notify user or refresh data? 
+                // Refreshing whole data is too disruptive.
+                
+                // Luckysheet collaboration usually requires `loadUrl` and `updateUrl` configuration 
+                // pointing to a websocket server that speaks its specific protocol.
+                // Here we are rolling our own basic socket event.
+                
+                // Let's just show a notification for now or try to update cell if valid.
+                console.log("Received update:", data.operate);
+                
+                // If operate has r, c, v (row, col, value)
+                if(data.operate.r !== undefined && data.operate.c !== undefined && data.operate.v !== undefined) {
+                    luckysheet.setCellValue(data.operate.r, data.operate.c, data.operate.v);
+                }
+            }
+        });
+
+        async function saveContent() {
+            statusMsg.textContent = '保存中...';
+            statusMsg.style.opacity = '1';
+
+            try {
+                const luckysheetData = luckysheet.getluckysheetfile();
+                const workbook = new ExcelJS.Workbook();
+                
+                luckysheetData.forEach(function(sheet) {
+                    if (sheet.data.length === 0) return;
+                    const worksheet = workbook.addWorksheet(sheet.name);
+                    
+                    for(let r=0; r<sheet.data.length; r++) {
+                        const row = sheet.data[r];
+                        if (!row) continue;
+                        for(let c=0; c<row.length; c++) {
+                            const cell = row[c];
+                            if(!cell) continue;
+                            const excelCell = worksheet.getCell(r+1, c+1);
+                            
+                            if(cell.v !== null) excelCell.value = cell.v;
+                            else if (cell.m !== null) excelCell.value = cell.m;
+                            
+                            if(cell.bg) excelCell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb: cell.bg.replace('#', '')}};
+                            if(cell.fc) excelCell.font = { color: { argb: cell.fc.replace('#', '') } };
+                            if(cell.bl) excelCell.font = Object.assign({}, excelCell.font || {}, { bold: true });
+                            if(cell.it) excelCell.font = Object.assign({}, excelCell.font || {}, { italic: true });
+                        }
+                    }
+                });
+                
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                
+                const formData = new FormData();
+                formData.append('file', blob, 'edited.xlsx');
+
+                const response = await fetch(`/documents/save_blob/${docId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.message) {
+                    statusMsg.textContent = '已保存';
+                    statusMsg.style.color = '#10b981';
+                    setTimeout(() => { statusMsg.style.opacity = '0'; }, 2000);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                statusMsg.textContent = '保存失败';
+                statusMsg.style.color = '#ef4444';
+                alert('保存出错: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
