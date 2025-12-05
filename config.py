@@ -22,6 +22,14 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+    
+    # 远程存储配置（云服务器SFTP）
+    USE_REMOTE_STORAGE = True  # 启用远程存储
+    REMOTE_HOST = '8.138.190.109'
+    REMOTE_PORT = 22
+    REMOTE_USERNAME = 'admin'
+    REMOTE_PASSWORD = '123456'
+    REMOTE_UPLOAD_DIR = '/home/admin/uploads'  # 远程服务器上的上传目录
 
     # JWT Configuration
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key'

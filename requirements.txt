@@ -16,3 +16,4 @@ pymysql==1.0.2
 flask-socketio
 eventlet
 gunicorn==20.1.0
+paramiko==3.0.0
